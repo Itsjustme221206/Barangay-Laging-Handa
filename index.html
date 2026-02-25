@@ -3,164 +3,250 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Barangay Laging Handa Portal</title>
+<title>Barangay Laging Handa | Advanced Complaint System</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
+:root{
+--primary:#002b5b;
+--secondary:#00509e;
+--accent:#ffd60a;
+--bg:#f4f7fb;
+--card:#ffffff;
+--danger:#ff4d4d;
+--success:#2e7d32;
+}
+body.dark{
+--bg:#0f172a;
+--card:#1e293b;
+--primary:#0ea5e9;
+--secondary:#0284c7;
+--accent:#facc15;
+--danger:#f87171;
+--success:#22c55e;
+color:#fff;
+}
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Poppins',sans-serif}
-body{background:#eef3f9;color:#333}
+body{background:var(--bg);transition:.3s}
+header{background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff;padding:25px;text-align:center;position:relative}
+header h1{font-size:28px;margin-bottom:5px}
+header button{position:absolute;top:20px;right:20px;padding:8px 12px;background:var(--accent);color:#000;border:none;border-radius:8px;cursor:pointer;font-weight:600}
+nav{display:flex;justify-content:center;gap:20px;background:var(--secondary);padding:12px;flex-wrap:wrap}
+nav a{color:#fff;text-decoration:none;font-weight:500;transition:.3s}
+nav a:hover{text-decoration:underline}
+section{max-width:1100px;margin:30px auto;padding:20px}
+.card{background:var(--card);padding:25px;border-radius:18px;box-shadow:0 10px 25px rgba(0,0,0,.08);margin-bottom:25px;animation:fadeIn .5s ease;transition:.3s}
+.card:hover{transform:translateY(-3px);box-shadow:0 15px 30px rgba(0,0,0,.15)}
+input,textarea,select{width:100%;padding:12px;margin:8px 0;border-radius:10px;border:1px solid #ccc;font-size:14px}
+button{padding:10px 16px;border:none;border-radius:8px;background:var(--primary);color:#fff;cursor:pointer;font-weight:600;transition:.3s}
+button:hover{background:var(--secondary)}
+table{width:100%;border-collapse:collapse;margin-top:15px;font-size:14px}
+th,td{padding:10px;border:1px solid #ddd;text-align:center}
+th{background:var(--primary);color:#fff}
+.badge{padding:4px 8px;border-radius:6px;font-size:12px;color:#fff}
+.pending{background:var(--danger)}
+.resolved{background:var(--success)}
 .hidden{display:none}
-
-#loginScreen{position:fixed;width:100%;height:100vh;background:linear-gradient(135deg,#002b5b,#00509e);display:flex;justify-content:center;align-items:center;z-index:999}
-.login-box{background:#fff;padding:40px;border-radius:20px;width:360px;box-shadow:0 20px 40px rgba(0,0,0,.2);text-align:center}
-.login-box input{width:100%;padding:12px;margin:10px 0;border-radius:10px;border:1px solid #ccc}
-.login-box button{width:100%;padding:12px;border:none;border-radius:10px;background:#002b5b;color:#fff;font-weight:600;cursor:pointer}
-
-header{background:#002b5b;color:#fff;text-align:center;padding:25px}
-nav{display:flex;justify-content:center;gap:30px;background:#00509e;padding:15px}
-nav a{color:#fff;text-decoration:none}
-section{padding:40px 20px;max-width:1100px;margin:auto}
-
-form input,form textarea{width:100%;padding:12px;margin:10px 0;border-radius:10px;border:1px solid #ccc}
-form button{padding:12px 20px;background:#002b5b;color:#fff;border:none;border-radius:10px;cursor:pointer}
-
-footer{background:#002b5b;color:#fff;text-align:center;padding:20px;margin-top:40px}
-
-table{width:100%;border-collapse:collapse;margin-top:20px;background:#fff}
-th,td{padding:12px;border:1px solid #ddd;text-align:left}
-th{background:#002b5b;color:#fff}
+footer{text-align:center;padding:15px;background:var(--primary);color:#fff;border-top:4px solid var(--accent)}
+.profile-box{background:var(--secondary);color:#fff;padding:10px;border-radius:10px;margin-bottom:10px}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 </style>
 </head>
 <body>
 
-<div id="loginScreen">
-<div class="login-box">
-<h2><i class="fa-solid fa-shield-halved"></i> Barangay Portal</h2>
-<input type="text" id="username" placeholder="Username">
-<input type="password" id="password" placeholder="Password">
-<button id="loginBtn">Login</button>
-<p style="font-size:12px;margin-top:10px">Resident: user / 1234 <br> Admin: admin / 1234</p>
-</div>
-</div>
-
 <header>
-<h1>Barangay Laging Handa</h1>
-<p>Official Complaint & Emergency System</p>
+<h1><i class="fa-solid fa-building-shield"></i> Barangay Laging Handa</h1>
+<p>Advanced Digital Complaint & Governance System</p>
+<button onclick="toggleDarkMode()"><i class="fa-solid fa-moon"></i> Dark Mode</button>
 </header>
 
-<nav id="mainNav" class="hidden">
-<a href="#report">Submit Complaint</a>
-<a href="#admin" id="adminLink" class="hidden">Admin Panel</a>
-</nav>
-
-<section id="report" class="hidden">
-<h2>Submit Complaint</h2>
-<form id="reportForm">
-<input type="text" id="name" placeholder="Full Name" required>
-<input type="text" id="address" placeholder="Address" required>
-<textarea id="issue" placeholder="Describe the issue..." required></textarea>
-<button type="submit">Submit Complaint</button>
-</form>
+<section class="card" id="userLogin">
+<h2><i class="fa-solid fa-user"></i> Resident Login</h2>
+<input type="text" id="residentName" placeholder="Full Name" required>
+<input type="text" id="residentNumber" placeholder="Contact Number" required>
+<button onclick="loginResident()">Enter Portal</button>
 </section>
 
-<section id="admin" class="hidden">
-<h2>Admin Panel - Complaints</h2>
+<section class="card hidden" id="adminLogin">
+<h2><i class="fa-solid fa-lock"></i> Admin Login</h2>
+<input type="password" id="adminPass" placeholder="Enter Admin Password">
+<button onclick="loginAdmin()">Login as Admin</button>
+</section>
+
+<nav class="hidden" id="mainNav">
+<a href="#report"><i class="fa-solid fa-pen"></i> Submit</a>
+<a href="#dashboard"><i class="fa-solid fa-chart-column"></i> Dashboard</a>
+<a href="#" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+</nav>
+
+<section id="profileSection" class="hidden">
+<div class="card">
+<h2><i class="fa-solid fa-id-card"></i> My Profile</h2>
+<div class="profile-box" id="profileInfo"></div>
+</div>
+</section>
+
+<section id="report" class="hidden">
+<div class="card">
+<h2><i class="fa-solid fa-file-circle-plus"></i> Submit Complaint</h2>
+<form id="complaintForm">
+<select id="category" required>
+<option value="">Select Category</option>
+<option>Noise</option>
+<option>Garbage</option>
+<option>Road</option>
+<option>Safety</option>
+<option>Other</option>
+</select>
+<textarea id="issue" placeholder="Describe the issue" required></textarea>
+<button type="submit">Submit & Download PDF</button>
+</form>
+</div>
+</section>
+
+<section id="dashboard" class="hidden">
+<div class="card">
+<h2><i class="fa-solid fa-clipboard-list"></i> Complaint Dashboard</h2>
+<input type="text" id="search" placeholder="Search..." onkeyup="loadComplaints()">
+<button onclick="exportCSV()"><i class="fa-solid fa-file-csv"></i> Export CSV</button>
+<button onclick="window.print()"><i class="fa-solid fa-print"></i> Print</button>
 <table>
 <thead>
 <tr>
+<th>ID</th>
 <th>Name</th>
-<th>Address</th>
+<th>Number</th>
+<th>Category</th>
 <th>Issue</th>
 <th>Date</th>
+<th>Status</th>
+<th>Action</th>
 </tr>
 </thead>
-<tbody id="complaintsTable"></tbody>
+<tbody id="complaintTable"></tbody>
 </table>
+</div>
 </section>
 
-<footer class="hidden" id="mainFooter">
-© 2026 Barangay Laging Handa
-</footer>
+<footer>© 2026 Barangay Laging Handa</footer>
 
-<!-- Firebase SDK -->
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+<script>
+let currentUser=null;
 
-// 🔴 REPLACE WITH YOUR FIREBASE CONFIG
-const firebaseConfig = {
-  apiKey: "AIzaSyCxUzrZLeNzuk12opECXJUvuN3zvr8MqWE",
-  authDomain: "barangay-laging-handa.firebaseapp.com",
-  projectId: "barangay-laging-handa",
-  storageBucket: "barangay-laging-handa.firebasestorage.app",
-  messagingSenderId: "1:630160870991:web:d1664d1997716ab203a43a",
-  appId: "XXXX"
-};
+// Dark mode
+function toggleDarkMode(){document.body.classList.toggle('dark');}
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-const loginBtn=document.getElementById("loginBtn");
-const loginScreen=document.getElementById("loginScreen");
-const mainNav=document.getElementById("mainNav");
-const adminLink=document.getElementById("adminLink");
-const reportSection=document.getElementById("report");
-const adminSection=document.getElementById("admin");
-const footer=document.getElementById("mainFooter");
-const complaintsTable=document.getElementById("complaintsTable");
-
-function showMain(){
-mainNav.classList.remove("hidden");
-reportSection.classList.remove("hidden");
-footer.classList.remove("hidden");
+// Resident login
+function loginResident(){
+let name=document.getElementById('residentName').value;
+let number=document.getElementById('residentNumber').value;
+if(name && number){
+currentUser={name,number};
+document.getElementById('userLogin').classList.add('hidden');
+document.getElementById('adminLogin').classList.remove('hidden');
+document.getElementById('mainNav').classList.remove('hidden');
+document.getElementById('profileSection').classList.remove('hidden');
+document.getElementById('report').classList.remove('hidden');
+document.getElementById('profileInfo').innerHTML=`Name: ${name}<br>Contact: ${number}`;
+}else alert('Please enter all details');
 }
 
-loginBtn.addEventListener("click",()=>{
-const username=document.getElementById("username").value;
-const password=document.getElementById("password").value;
-if(password==="1234"&&(username==="admin"||username==="user")){
-loginScreen.classList.add("hidden");
-showMain();
-if(username==="admin"){
-adminLink.classList.remove("hidden");
-adminSection.classList.remove("hidden");
+// Admin login
+function loginAdmin(){
+if(document.getElementById('adminPass').value==='admin123'){
+document.getElementById('dashboard').classList.remove('hidden');
+loadComplaints();
+}else alert('Wrong password');
+}
+
+// Logout
+function logout(){location.reload();}
+
+// Elements
+const form=document.getElementById('complaintForm');
+const table=document.getElementById('complaintTable');
+
+// Submit complaint
+form.addEventListener('submit',function(e){
+e.preventDefault();
+let complaints=JSON.parse(localStorage.getItem('complaints'))||[];
+let id='BRGY-'+Date.now();
+let complaint={
+id,
+name:currentUser.name,
+number:currentUser.number,
+category:document.getElementById('category').value,
+issue:document.getElementById('issue').value,
+date:new Date().toLocaleString(),
+status:'Pending'
+};
+complaints.push(complaint);
+localStorage.setItem('complaints',JSON.stringify(complaints));
+form.reset();
+loadComplaints();
+alert('Complaint submitted! PDF will download.');
+
+// Generate PDF
+const { jsPDF } = window.jspdf;
+const doc = new jsPDF();
+doc.setFontSize(16);
+doc.text("Barangay Laging Handa Complaint Form", 20, 20);
+doc.setFontSize(12);
+doc.text(`Complaint ID: ${complaint.id}`, 20, 35);
+doc.text(`Name: ${complaint.name}`, 20, 45);
+doc.text(`Contact Number: ${complaint.number}`, 20, 55);
+doc.text(`Category: ${complaint.category}`, 20, 65);
+doc.text(`Issue: ${complaint.issue}`, 20, 75);
+doc.text(`Date Submitted: ${complaint.date}`, 20, 85);
+doc.save(`Complaint-${complaint.id}.pdf`);
+});
+
+// Load complaints
+function loadComplaints(){
+let search=document.getElementById('search')?.value.toLowerCase()||'';
+let complaints=JSON.parse(localStorage.getItem('complaints'))||[];
+table.innerHTML='';
+complaints.forEach((c,i)=>{
+if(c.name.toLowerCase().includes(search)||c.category.toLowerCase().includes(search)||c.issue.toLowerCase().includes(search)){
+let badge=c.status==='Resolved'?'resolved':'pending';
+table.innerHTML+=`<tr>
+<td>${c.id}</td>
+<td>${c.name}</td>
+<td>${c.number}</td>
+<td>${c.category}</td>
+<td>${c.issue}</td>
+<td>${c.date}</td>
+<td><span class="badge ${badge}">${c.status}</span></td>
+<td><button onclick="resolve(${i})"><i class='fa-solid fa-check'></i></button></td>
+</tr>`;
+}
+});
+}
+
+// Resolve complaint
+function resolve(i){
+let complaints=JSON.parse(localStorage.getItem('complaints'))||[];
+complaints[i].status='Resolved';
+localStorage.setItem('complaints',JSON.stringify(complaints));
 loadComplaints();
 }
-}else{alert("Invalid login credentials");}
-});
 
-// Submit complaint to Firestore
-const reportForm=document.getElementById("reportForm");
-reportForm.addEventListener("submit",async(e)=>{
-e.preventDefault();
-await addDoc(collection(db,"complaints"),{
-name:document.getElementById("name").value,
-address:document.getElementById("address").value,
-issue:document.getElementById("issue").value,
-date:new Date()
+// Export CSV
+function exportCSV(){
+let complaints=JSON.parse(localStorage.getItem('complaints'))||[];
+let csv="ID,Name,Number,Category,Issue,Date,Status\n";
+complaints.forEach(c=>{
+csv+=`${c.id},${c.name},${c.number},${c.category},${c.issue},${c.date},${c.status}\n`;
 });
-alert("Complaint submitted successfully.");
-reportForm.reset();
-});
-
-// Load complaints for admin
-async function loadComplaints(){
-complaintsTable.innerHTML="";
-const q=query(collection(db,"complaints"),orderBy("date","desc"));
-const querySnapshot=await getDocs(q);
-querySnapshot.forEach((doc)=>{
-const c=doc.data();
-let row=`<tr>
-<td>${c.name}</td>
-<td>${c.address}</td>
-<td>${c.issue}</td>
-<td>${new Date(c.date.seconds*1000).toLocaleString()}</td>
-</tr>`;
-complaintsTable.innerHTML+=row;
-});
+let blob=new Blob([csv],{type:'text/csv'});
+let a=document.createElement('a');
+a.href=URL.createObjectURL(blob);
+a.download='complaints.csv';
+a.click();
 }
 
+loadComplaints();
 </script>
 
 </body>
