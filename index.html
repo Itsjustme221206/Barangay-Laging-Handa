@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Barangay Laging Handa | Advanced Complaint System</title>
+<title>Barangay Laging Handa | Complaint System</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -61,33 +61,36 @@ footer{text-align:center;padding:15px;background:var(--primary);color:#fff;borde
 <button onclick="toggleDarkMode()"><i class="fa-solid fa-moon"></i> Dark Mode</button>
 </header>
 
-<section class="card" id="userLogin">
+<!-- LOGIN SECTIONS -->
+<section class="card" id="residentLogin">
 <h2><i class="fa-solid fa-user"></i> Resident Login</h2>
 <input type="text" id="residentName" placeholder="Full Name" required>
 <input type="text" id="residentNumber" placeholder="Contact Number" required>
 <button onclick="loginResident()">Enter Portal</button>
 </section>
 
-<section class="card hidden" id="adminLogin">
+<section class="card" id="adminLogin">
 <h2><i class="fa-solid fa-lock"></i> Admin Login</h2>
 <input type="password" id="adminPass" placeholder="Enter Admin Password">
 <button onclick="loginAdmin()">Login as Admin</button>
 </section>
 
+<!-- NAV -->
 <nav class="hidden" id="mainNav">
-<a href="#report"><i class="fa-solid fa-pen"></i> Submit</a>
-<a href="#dashboard"><i class="fa-solid fa-chart-column"></i> Dashboard</a>
+<a href="#report" class="residentOnly"><i class="fa-solid fa-pen"></i> Submit</a>
+<a href="#dashboard" class="adminOnly"><i class="fa-solid fa-chart-column"></i> Dashboard</a>
 <a href="#" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
 </nav>
 
-<section id="profileSection" class="hidden">
+<!-- RESIDENT SECTIONS -->
+<section id="profileSection" class="hidden residentOnly">
 <div class="card">
 <h2><i class="fa-solid fa-id-card"></i> My Profile</h2>
 <div class="profile-box" id="profileInfo"></div>
 </div>
 </section>
 
-<section id="report" class="hidden">
+<section id="report" class="hidden residentOnly">
 <div class="card">
 <h2><i class="fa-solid fa-file-circle-plus"></i> Submit Complaint</h2>
 <form id="complaintForm">
@@ -105,7 +108,8 @@ footer{text-align:center;padding:15px;background:var(--primary);color:#fff;borde
 </div>
 </section>
 
-<section id="dashboard" class="hidden">
+<!-- ADMIN DASHBOARD -->
+<section id="dashboard" class="hidden adminOnly">
 <div class="card">
 <h2><i class="fa-solid fa-clipboard-list"></i> Complaint Dashboard</h2>
 <input type="text" id="search" placeholder="Search..." onkeyup="loadComplaints()">
@@ -132,118 +136,132 @@ footer{text-align:center;padding:15px;background:var(--primary);color:#fff;borde
 <footer>© 2026 Barangay Laging Handa</footer>
 
 <script>
-let currentUser=null;
+let currentUser = null;
 
-// Dark mode
-function toggleDarkMode(){document.body.classList.toggle('dark');}
+function toggleDarkMode() {
+    document.body.classList.toggle('dark');
+}
 
-// Resident login
+// RESIDENT LOGIN
 function loginResident(){
-let name=document.getElementById('residentName').value;
-let number=document.getElementById('residentNumber').value;
-if(name && number){
-currentUser={name,number};
-document.getElementById('userLogin').classList.add('hidden');
-document.getElementById('adminLogin').classList.remove('hidden');
-document.getElementById('mainNav').classList.remove('hidden');
-document.getElementById('profileSection').classList.remove('hidden');
-document.getElementById('report').classList.remove('hidden');
-document.getElementById('profileInfo').innerHTML=`Name: ${name}<br>Contact: ${number}`;
-}else alert('Please enter all details');
+    let name = document.getElementById('residentName').value;
+    let number = document.getElementById('residentNumber').value;
+    if(name && number){
+        currentUser = {name, number};
+        document.getElementById('residentLogin').classList.add('hidden');
+        document.getElementById('adminLogin').classList.add('hidden');
+
+        // Show resident-only sections
+        document.querySelectorAll('.residentOnly').forEach(el=>el.classList.remove('hidden'));
+        document.querySelectorAll('.adminOnly').forEach(el=>el.classList.add('hidden'));
+
+        document.getElementById('profileInfo').innerHTML=`Name: ${name}<br>Contact: ${number}`;
+    }else{
+        alert('Please enter all details');
+    }
 }
 
-// Admin login
+// ADMIN LOGIN
 function loginAdmin(){
-if(document.getElementById('adminPass').value==='admin123'){
-document.getElementById('dashboard').classList.remove('hidden');
-loadComplaints();
-}else alert('Wrong password');
+    if(document.getElementById('adminPass').value==='admin123'){
+        document.getElementById('residentLogin').classList.add('hidden');
+        document.getElementById('adminLogin').classList.add('hidden');
+
+        // Show admin-only sections
+        document.querySelectorAll('.adminOnly').forEach(el=>el.classList.remove('hidden'));
+        document.querySelectorAll('.residentOnly').forEach(el=>el.classList.add('hidden'));
+
+        loadComplaints();
+    }else{
+        alert('Wrong password');
+    }
 }
 
-// Logout
-function logout(){location.reload();}
+// LOGOUT
+function logout(){
+    location.reload();
+}
 
-// Elements
-const form=document.getElementById('complaintForm');
-const table=document.getElementById('complaintTable');
+// FORM HANDLING
+const form = document.getElementById('complaintForm');
+const table = document.getElementById('complaintTable');
 
-// Submit complaint
-form.addEventListener('submit',function(e){
-e.preventDefault();
-let complaints=JSON.parse(localStorage.getItem('complaints'))||[];
-let id='BRGY-'+Date.now();
-let complaint={
-id,
-name:currentUser.name,
-number:currentUser.number,
-category:document.getElementById('category').value,
-issue:document.getElementById('issue').value,
-date:new Date().toLocaleString(),
-status:'Pending'
-};
-complaints.push(complaint);
-localStorage.setItem('complaints',JSON.stringify(complaints));
-form.reset();
-loadComplaints();
-alert('Complaint submitted! PDF will download.');
+form?.addEventListener('submit', function(e){
+    e.preventDefault();
+    let complaints = JSON.parse(localStorage.getItem('complaints')) || [];
+    let id = 'BRGY-'+Date.now();
+    let complaint = {
+        id,
+        name: currentUser.name,
+        number: currentUser.number,
+        category: document.getElementById('category').value,
+        issue: document.getElementById('issue').value,
+        date: new Date().toLocaleString(),
+        status: 'Pending'
+    };
+    complaints.push(complaint);
+    localStorage.setItem('complaints', JSON.stringify(complaints));
+    form.reset();
+    loadComplaints();
+    alert('Complaint submitted! PDF will download.');
 
-// Generate PDF
-const { jsPDF } = window.jspdf;
-const doc = new jsPDF();
-doc.setFontSize(16);
-doc.text("Barangay Laging Handa Complaint Form", 20, 20);
-doc.setFontSize(12);
-doc.text(`Complaint ID: ${complaint.id}`, 20, 35);
-doc.text(`Name: ${complaint.name}`, 20, 45);
-doc.text(`Contact Number: ${complaint.number}`, 20, 55);
-doc.text(`Category: ${complaint.category}`, 20, 65);
-doc.text(`Issue: ${complaint.issue}`, 20, 75);
-doc.text(`Date Submitted: ${complaint.date}`, 20, 85);
-doc.save(`Complaint-${complaint.id}.pdf`);
+    // Generate PDF
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    doc.setFontSize(16);
+    doc.text("Barangay Laging Handa Complaint Form", 20, 20);
+    doc.setFontSize(12);
+    doc.text(`Complaint ID: ${complaint.id}`, 20, 35);
+    doc.text(`Name: ${complaint.name}`, 20, 45);
+    doc.text(`Contact Number: ${complaint.number}`, 20, 55);
+    doc.text(`Category: ${complaint.category}`, 20, 65);
+    doc.text(`Issue: ${complaint.issue}`, 20, 75);
+    doc.text(`Date Submitted: ${complaint.date}`, 20, 85);
+    doc.save(`Complaint-${complaint.id}.pdf`);
 });
 
-// Load complaints
+// LOAD COMPLAINTS FOR ADMIN
 function loadComplaints(){
-let search=document.getElementById('search')?.value.toLowerCase()||'';
-let complaints=JSON.parse(localStorage.getItem('complaints'))||[];
-table.innerHTML='';
-complaints.forEach((c,i)=>{
-if(c.name.toLowerCase().includes(search)||c.category.toLowerCase().includes(search)||c.issue.toLowerCase().includes(search)){
-let badge=c.status==='Resolved'?'resolved':'pending';
-table.innerHTML+=`<tr>
-<td>${c.id}</td>
-<td>${c.name}</td>
-<td>${c.number}</td>
-<td>${c.category}</td>
-<td>${c.issue}</td>
-<td>${c.date}</td>
-<td><span class="badge ${badge}">${c.status}</span></td>
-<td><button onclick="resolve(${i})"><i class='fa-solid fa-check'></i></button></td>
-</tr>`;
-}
-});
+    let search = document.getElementById('search')?.value.toLowerCase()||'';
+    let complaints = JSON.parse(localStorage.getItem('complaints')) || [];
+    table.innerHTML = '';
+    complaints.forEach((c,i)=>{
+        if(c.name.toLowerCase().includes(search) || c.category.toLowerCase().includes(search) || c.issue.toLowerCase().includes(search)){
+            let badge = c.status==='Resolved'?'resolved':'pending';
+            table.innerHTML+=`<tr>
+                <td>${c.id}</td>
+                <td>${c.name}</td>
+                <td>${c.number}</td>
+                <td>${c.category}</td>
+                <td>${c.issue}</td>
+                <td>${c.date}</td>
+                <td><span class="badge ${badge}">${c.status}</span></td>
+                <td><button onclick="resolve(${i})"><i class='fa-solid fa-check'></i></button></td>
+            </tr>`;
+        }
+    });
 }
 
-// Resolve complaint
+// RESOLVE COMPLAINT
 function resolve(i){
-let complaints=JSON.parse(localStorage.getItem('complaints'))||[];
-complaints[i].status='Resolved';
-localStorage.setItem('complaints',JSON.stringify(complaints));
-loadComplaints();
+    let complaints = JSON.parse(localStorage.getItem('complaints'))||[];
+    complaints[i].status = 'Resolved';
+    localStorage.setItem('complaints',JSON.stringify(complaints));
+    loadComplaints();
 }
 
-// Export CSV
+// EXPORT CSV
 function exportCSV(){
-let complaints=JSON.parse(localStorage.getItem('complaints'))||[];
-let csv="ID,Name,Number,Category,Issue,Date,Status\n";
-complaints.forEach(c=>{
-csv+=`${c.id},${c.name},${c.number},${c.category},${c.issue},${c.date},${c.status}\n`;
-});
-let blob=new Blob([csv],{type:'text/csv'});
-let a=document.createElement('a');
-a.href=URL.createObjectURL(blob);
-a.download='complaints.csv';
-a.click();
+    let complaints = JSON.parse(localStorage.getItem('complaints'))||[];
+    let csv="ID,Name,Number,Category,Issue,Date,Status\n";
+    complaints.forEach(c=>{
+        csv+=`${c.id},${c.name},${c.number},${c.category},${c.issue},${c.date},${c.status}\n`;
+    });
+    let blob = new Blob([csv],{type:'text/csv'});
+    let a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'complaints.csv';
+    a.click();
 }
 
 loadComplaints();
@@ -251,3 +269,4 @@ loadComplaints();
 
 </body>
 </html>
+
