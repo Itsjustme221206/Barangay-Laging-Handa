@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Barangay Laging Handa Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Poppins',sans-serif}
+body{background:#eef3f9;color:#333}
+.hidden{display:none}
+
+#loginScreen{position:fixed;width:100%;height:100vh;background:linear-gradient(135deg,#002b5b,#00509e);display:flex;justify-content:center;align-items:center;z-index:999}
+.login-box{background:#fff;padding:40px;border-radius:20px;width:360px;box-shadow:0 20px 40px rgba(0,0,0,.2);text-align:center}
+.login-box input{width:100%;padding:12px;margin:10px 0;border-radius:10px;border:1px solid #ccc}
+.login-box button{width:100%;padding:12px;border:none;border-radius:10px;background:#002b5b;color:#fff;font-weight:600;cursor:pointer}
+
+header{background:#002b5b;color:#fff;text-align:center;padding:25px}
+nav{display:flex;justify-content:center;gap:30px;background:#00509e;padding:15px}
+nav a{color:#fff;text-decoration:none}
+section{padding:40px 20px;max-width:1100px;margin:auto}
+
+form input,form textarea{width:100%;padding:12px;margin:10px 0;border-radius:10px;border:1px solid #ccc}
+form button{padding:12px 20px;background:#002b5b;color:#fff;border:none;border-radius:10px;cursor:pointer}
+
+footer{background:#002b5b;color:#fff;text-align:center;padding:20px;margin-top:40px}
+
+table{width:100%;border-collapse:collapse;margin-top:20px;background:#fff}
+th,td{padding:12px;border:1px solid #ddd;text-align:left}
+th{background:#002b5b;color:#fff}
+</style>
+</head>
+<body>
+
+<div id="loginScreen">
+<div class="login-box">
+<h2><i class="fa-solid fa-shield-halved"></i> Barangay Portal</h2>
+<input type="text" id="username" placeholder="Username">
+<input type="password" id="password" placeholder="Password">
+<button id="loginBtn">Login</button>
+<p style="font-size:12px;margin-top:10px">Resident: user / 1234 <br> Admin: admin / 1234</p>
+</div>
+</div>
+
+<header>
+<h1>Barangay Laging Handa</h1>
+<p>Official Complaint & Emergency System</p>
+</header>
+
+<nav id="mainNav" class="hidden">
+<a href="#report">Submit Complaint</a>
+<a href="#admin" id="adminLink" class="hidden">Admin Panel</a>
+</nav>
+
+<section id="report" class="hidden">
+<h2>Submit Complaint</h2>
+<form id="reportForm">
+<input type="text" id="name" placeholder="Full Name" required>
+<input type="text" id="address" placeholder="Address" required>
+<textarea id="issue" placeholder="Describe the issue..." required></textarea>
+<button type="submit">Submit Complaint</button>
+</form>
+</section>
+
+<section id="admin" class="hidden">
+<h2>Admin Panel - Complaints</h2>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Address</th>
+<th>Issue</th>
+<th>Date</th>
+</tr>
+</thead>
+<tbody id="complaintsTable"></tbody>
+</table>
+</section>
+
+<footer class="hidden" id="mainFooter">
+© 2026 Barangay Laging Handa
+</footer>
+
+<!-- Firebase SDK -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+// 🔴 REPLACE WITH YOUR FIREBASE CONFIG
+const firebaseConfig = {
+  apiKey: "AIzaSyCxUzrZLeNzuk12opECXJUvuN3zvr8MqWE",
+  authDomain: "barangay-laging-handa.firebaseapp.com",
+  projectId: "barangay-laging-handa",
+  storageBucket: "barangay-laging-handa.firebasestorage.app",
+  messagingSenderId: "1:630160870991:web:d1664d1997716ab203a43a",
+  appId: "XXXX"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const loginBtn=document.getElementById("loginBtn");
+const loginScreen=document.getElementById("loginScreen");
+const mainNav=document.getElementById("mainNav");
+const adminLink=document.getElementById("adminLink");
+const reportSection=document.getElementById("report");
+const adminSection=document.getElementById("admin");
+const footer=document.getElementById("mainFooter");
+const complaintsTable=document.getElementById("complaintsTable");
+
+function showMain(){
+mainNav.classList.remove("hidden");
+reportSection.classList.remove("hidden");
+footer.classList.remove("hidden");
+}
+
+loginBtn.addEventListener("click",()=>{
+const username=document.getElementById("username").value;
+const password=document.getElementById("password").value;
+if(password==="1234"&&(username==="admin"||username==="user")){
+loginScreen.classList.add("hidden");
+showMain();
+if(username==="admin"){
+adminLink.classList.remove("hidden");
+adminSection.classList.remove("hidden");
+loadComplaints();
+}
+}else{alert("Invalid login credentials");}
+});
+
+// Submit complaint to Firestore
+const reportForm=document.getElementById("reportForm");
+reportForm.addEventListener("submit",async(e)=>{
+e.preventDefault();
+await addDoc(collection(db,"complaints"),{
+name:document.getElementById("name").value,
+address:document.getElementById("address").value,
+issue:document.getElementById("issue").value,
+date:new Date()
+});
+alert("Complaint submitted successfully.");
+reportForm.reset();
+});
+
+// Load complaints for admin
+async function loadComplaints(){
+complaintsTable.innerHTML="";
+const q=query(collection(db,"complaints"),orderBy("date","desc"));
+const querySnapshot=await getDocs(q);
+querySnapshot.forEach((doc)=>{
+const c=doc.data();
+let row=`<tr>
+<td>${c.name}</td>
+<td>${c.address}</td>
+<td>${c.issue}</td>
+<td>${new Date(c.date.seconds*1000).toLocaleString()}</td>
+</tr>`;
+complaintsTable.innerHTML+=row;
+});
+}
+
+</script>
+
+</body>
+</html>
