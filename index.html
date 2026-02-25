@@ -7,6 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
 <style>
 :root{
 --primary:#002b5b;
@@ -51,6 +52,21 @@ th{background:var(--primary);color:#fff}
 footer{text-align:center;padding:15px;background:var(--primary);color:#fff;border-top:4px solid var(--accent)}
 .profile-box{background:var(--secondary);color:#fff;padding:10px;border-radius:10px;margin-bottom:10px}
 .notification{background:var(--success);color:#fff;padding:10px;border-radius:8px;margin-bottom:10px;text-align:center}
+#residentLogout{margin-top:10px;background:#ff4d4d}
+#residentLogout:hover{background:#e60000}
+#toast{
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: var(--success);
+    color: #fff;
+    padding: 15px 20px;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    z-index: 9999;
+    font-weight: 600;
+    display: none;
+}
 @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 </style>
 </head>
@@ -89,6 +105,7 @@ footer{text-align:center;padding:15px;background:var(--primary);color:#fff;borde
 <h2><i class="fa-solid fa-id-card"></i> My Profile</h2>
 <div class="profile-box" id="profileInfo"></div>
 <div id="notifications"></div>
+<button id="residentLogout" onclick="logout()">Logout</button>
 </div>
 </section>
 
@@ -136,6 +153,7 @@ footer{text-align:center;padding:15px;background:var(--primary);color:#fff;borde
 </section>
 
 <footer>© 2026 Barangay Laging Handa</footer>
+<div id="toast" class="hidden"></div>
 
 <script>
 let currentUser = null;
@@ -192,9 +210,14 @@ const table = document.getElementById('complaintTable');
 form?.addEventListener('submit', function(e){
     e.preventDefault();
     let complaints = JSON.parse(localStorage.getItem('complaints')) || [];
-    let id = 'BRGY-'+Date.now();
+
+    // Generate sequential ID
+    let lastId = complaints.length ? complaints[complaints.length-1].id.split(' - ')[1] : 0;
+    let newId = parseInt(lastId)+1;
+    let complaintId = `BRGY LH - ${newId}`;
+
     let complaint = {
-        id,
+        id: complaintId,
         name: currentUser.name,
         number: currentUser.number,
         category: document.getElementById('category').value,
@@ -282,14 +305,26 @@ function exportCSV(){
     a.click();
 }
 
-// RESIDENT NOTIFICATIONS
+// RESIDENT NOTIFICATIONS WITH TOAST
 function showNotifications(){
     let notificationsDiv = document.getElementById('notifications');
     notificationsDiv.innerHTML = '';
     let complaints = JSON.parse(localStorage.getItem('complaints'))||[];
     complaints.filter(c=>c.name===currentUser?.name && c.status==='Resolved').forEach(c=>{
         notificationsDiv.innerHTML += `<div class="notification">Your complaint (${c.id}) has been resolved ✅</div>`;
+        showToast(`Your complaint (${c.id}) has been resolved ✅`);
     });
+}
+
+// TOAST POPUP
+function showToast(message){
+    const toast = document.getElementById('toast');
+    toast.innerText = message;
+    toast.style.display = 'block';
+    toast.classList.remove('hidden');
+    setTimeout(()=>{
+        toast.style.display = 'none';
+    },4000);
 }
 
 loadComplaints();
