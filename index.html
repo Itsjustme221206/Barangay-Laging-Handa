@@ -3,29 +3,19 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Barangay Laging Handa | Complaint System</title>
+<title>Barangay Laging Handa | Complete System</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
 :root{
---primary:#002b5b;
---secondary:#00509e;
---accent:#ffd60a;
---bg:#f4f7fb;
---card:#ffffff;
---danger:#ff4d4d;
---success:#2e7d32;
+--primary:#002b5b; --secondary:#00509e; --accent:#ffd60a; --bg:#f4f7fb;
+--card:#ffffff; --danger:#ff4d4d; --success:#2e7d32;
 }
 body.dark{
---bg:#0f172a;
---card:#1e293b;
---primary:#0ea5e9;
---secondary:#0284c7;
---accent:#facc15;
---danger:#f87171;
---success:#22c55e;
+--bg:#0f172a; --card:#1e293b; --primary:#0ea5e9;
+--secondary:#0284c7; --accent:#facc15; --danger:#f87171; --success:#22c55e;
 color:#fff;
 }
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Poppins',sans-serif}
@@ -52,21 +42,10 @@ th{background:var(--primary);color:#fff}
 footer{text-align:center;padding:15px;background:var(--primary);color:#fff;border-top:4px solid var(--accent)}
 .profile-box{background:var(--secondary);color:#fff;padding:10px;border-radius:10px;margin-bottom:10px}
 .notification{background:var(--success);color:#fff;padding:10px;border-radius:8px;margin-bottom:10px;text-align:center}
-#residentLogout{margin-top:10px;background:#ff4d4d}
+#residentLogout, #clearNotifications{margin-top:10px}
+#residentLogout{background:#ff4d4d}
 #residentLogout:hover{background:#e60000}
-#toast{
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    background: var(--success);
-    color: #fff;
-    padding: 15px 20px;
-    border-radius: 10px;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-    z-index: 9999;
-    font-weight: 600;
-    display: none;
-}
+#toast{position: fixed;bottom: 20px;right: 20px;background: var(--success);color: #fff;padding: 15px 20px;border-radius: 10px;box-shadow: 0 5px 15px rgba(0,0,0,0.2);z-index: 9999;font-weight: 600;display: none;}
 @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 </style>
 </head>
@@ -78,7 +57,7 @@ footer{text-align:center;padding:15px;background:var(--primary);color:#fff;borde
 <button onclick="toggleDarkMode()"><i class="fa-solid fa-moon"></i> Dark Mode</button>
 </header>
 
-<!-- LOGIN SECTIONS -->
+<!-- LOGIN -->
 <section class="card" id="residentLogin">
 <h2><i class="fa-solid fa-user"></i> Resident Login</h2>
 <input type="text" id="residentName" placeholder="Full Name" required>
@@ -96,16 +75,18 @@ footer{text-align:center;padding:15px;background:var(--primary);color:#fff;borde
 <nav class="hidden" id="mainNav">
 <a href="#report" class="residentOnly"><i class="fa-solid fa-pen"></i> Submit</a>
 <a href="#dashboard" class="adminOnly"><i class="fa-solid fa-chart-column"></i> Dashboard</a>
+<a href="#adminSettings" class="adminOnly"><i class="fa-solid fa-key"></i> Settings</a>
 <a href="#" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
 </nav>
 
-<!-- RESIDENT SECTIONS -->
+<!-- RESIDENT -->
 <section id="profileSection" class="hidden residentOnly">
 <div class="card">
 <h2><i class="fa-solid fa-id-card"></i> My Profile</h2>
 <div class="profile-box" id="profileInfo"></div>
 <div id="notifications"></div>
-<button id="residentLogout" onclick="logout()">Logout</button>
+<button id="clearNotifications">Clear Notifications</button>
+<button id="residentLogout">Logout</button>
 </div>
 </section>
 
@@ -152,183 +133,215 @@ footer{text-align:center;padding:15px;background:var(--primary);color:#fff;borde
 </div>
 </section>
 
+<!-- ADMIN SETTINGS -->
+<section id="adminSettings" class="hidden adminOnly">
+<div class="card">
+<h2><i class="fa-solid fa-key"></i> Admin Settings</h2>
+<input type="password" id="currentPass" placeholder="Current Password">
+<input type="password" id="newPass" placeholder="New Password">
+<input type="password" id="confirmPass" placeholder="Confirm New Password">
+<button onclick="changeAdminPassword()">Change Password</button>
+</div>
+</section>
+
 <footer>© 2026 Barangay Laging Handa</footer>
 <div id="toast" class="hidden"></div>
 
 <script>
-let currentUser = null;
+let currentUser=null;
+let adminPassword = localStorage.getItem('adminPass') || 'admin123'; // default
 
-function toggleDarkMode() {
-    document.body.classList.toggle('dark');
-}
+// Dark mode
+function toggleDarkMode(){document.body.classList.toggle('dark');}
 
-// RESIDENT LOGIN
+// Resident login
 function loginResident(){
-    let name = document.getElementById('residentName').value;
-    let number = document.getElementById('residentNumber').value;
+    let name=document.getElementById('residentName').value;
+    let number=document.getElementById('residentNumber').value;
     if(name && number){
-        currentUser = {name, number};
+        currentUser={name,number};
         document.getElementById('residentLogin').classList.add('hidden');
         document.getElementById('adminLogin').classList.add('hidden');
         document.getElementById('mainNav').classList.remove('hidden');
-
         document.querySelectorAll('.residentOnly').forEach(el=>el.classList.remove('hidden'));
         document.querySelectorAll('.adminOnly').forEach(el=>el.classList.add('hidden'));
-
         document.getElementById('profileInfo').innerHTML=`Name: ${name}<br>Contact: ${number}`;
         showNotifications();
-    }else{
-        alert('Please enter all details');
-    }
+    } else alert('Please enter all details');
 }
 
-// ADMIN LOGIN
+// Admin login
 function loginAdmin(){
-    if(document.getElementById('adminPass').value==='admin123'){
+    let entered=document.getElementById('adminPass').value;
+    if(entered===adminPassword){
+        currentUser=null;
         document.getElementById('residentLogin').classList.add('hidden');
         document.getElementById('adminLogin').classList.add('hidden');
         document.getElementById('mainNav').classList.remove('hidden');
-
         document.querySelectorAll('.adminOnly').forEach(el=>el.classList.remove('hidden'));
         document.querySelectorAll('.residentOnly').forEach(el=>el.classList.add('hidden'));
-
         loadComplaints();
-    }else{
-        alert('Wrong password');
-    }
+    } else alert('Wrong password');
 }
 
-// LOGOUT
-function logout(){
-    location.reload();
-}
+// Logout
+function logout(){location.reload();}
 
-// FORM HANDLING
-const form = document.getElementById('complaintForm');
-const table = document.getElementById('complaintTable');
+// Initialize last complaint ID
+if(!localStorage.getItem('lastComplaintId')) localStorage.setItem('lastComplaintId','0');
 
-form?.addEventListener('submit', function(e){
+// Form handling
+const form=document.getElementById('complaintForm');
+const table=document.getElementById('complaintTable');
+
+form?.addEventListener('submit',function(e){
     e.preventDefault();
-    let complaints = JSON.parse(localStorage.getItem('complaints')) || [];
+    let complaints=JSON.parse(localStorage.getItem('complaints'))||[];
 
-    // Generate sequential ID
-    let lastId = complaints.length ? complaints[complaints.length-1].id.split(' - ')[1] : 0;
-    let newId = parseInt(lastId)+1;
-    let complaintId = `BRGY LH - ${newId}`;
+    let lastId=parseInt(localStorage.getItem('lastComplaintId'))||0;
+    let newId=lastId+1;
+    let complaintId=`BRGY LH - ${newId}`;
+    localStorage.setItem('lastComplaintId',newId);
 
-    let complaint = {
+    let complaint={
         id: complaintId,
         name: currentUser.name,
         number: currentUser.number,
-        category: document.getElementById('category').value,
-        issue: document.getElementById('issue').value,
-        date: new Date().toLocaleString(),
-        status: 'Pending'
+        category:document.getElementById('category').value,
+        issue:document.getElementById('issue').value,
+        date:new Date().toLocaleString(),
+        status:'Pending'
     };
     complaints.push(complaint);
-    localStorage.setItem('complaints', JSON.stringify(complaints));
+    localStorage.setItem('complaints',JSON.stringify(complaints));
     form.reset();
     alert('Complaint submitted! PDF will download.');
 
-    // Generate PDF
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
+    // PDF
+    const { jsPDF }=window.jspdf;
+    const doc=new jsPDF();
     doc.setFontSize(16);
-    doc.text("Barangay Laging Handa Complaint Form", 20, 20);
+    doc.text("Barangay Laging Handa Complaint Form",20,20);
     doc.setFontSize(12);
-    doc.text(`Complaint ID: ${complaint.id}`, 20, 35);
-    doc.text(`Name: ${complaint.name}`, 20, 45);
-    doc.text(`Contact Number: ${complaint.number}`, 20, 55);
-    doc.text(`Category: ${complaint.category}`, 20, 65);
-    doc.text(`Issue: ${complaint.issue}`, 20, 75);
-    doc.text(`Date Submitted: ${complaint.date}`, 20, 85);
+    doc.text(`Complaint ID: ${complaint.id}`,20,35);
+    doc.text(`Name: ${complaint.name}`,20,45);
+    doc.text(`Contact Number: ${complaint.number}`,20,55);
+    doc.text(`Category: ${complaint.category}`,20,65);
+    doc.text(`Issue: ${complaint.issue}`,20,75);
+    doc.text(`Date Submitted: ${complaint.date}`,20,85);
     doc.save(`Complaint-${complaint.id}.pdf`);
-
     showNotifications();
 });
 
-// LOAD COMPLAINTS FOR ADMIN
+// Load complaints
 function loadComplaints(){
-    let search = document.getElementById('search')?.value.toLowerCase()||'';
-    let complaints = JSON.parse(localStorage.getItem('complaints')) || [];
-    table.innerHTML = '';
+    let search=document.getElementById('search')?.value.toLowerCase()||'';
+    let complaints=JSON.parse(localStorage.getItem('complaints'))||[];
+    table.innerHTML='';
     complaints.forEach((c,i)=>{
-        if(c.name.toLowerCase().includes(search) || c.category.toLowerCase().includes(search) || c.issue.toLowerCase().includes(search)){
-            let badge = c.status==='Resolved'?'resolved':'pending';
+        if(c.name.toLowerCase().includes(search)||c.category.toLowerCase().includes(search)||c.issue.toLowerCase().includes(search)){
+            let badge=c.status==='Resolved'?'resolved':'pending';
             table.innerHTML+=`<tr>
-                <td>${c.id}</td>
-                <td>${c.name}</td>
-                <td>${c.number}</td>
-                <td>${c.category}</td>
-                <td>${c.issue}</td>
-                <td>${c.date}</td>
-                <td><span class="badge ${badge}">${c.status}</span></td>
-                <td>
-                    <button onclick="resolve(${i})"><i class='fa-solid fa-check'></i></button>
-                    <button onclick="deleteComplaint(${i})"><i class='fa-solid fa-trash'></i></button>
-                </td>
+            <td>${c.id}</td>
+            <td>${c.name}</td>
+            <td>${c.number}</td>
+            <td>${c.category}</td>
+            <td>${c.issue}</td>
+            <td>${c.date}</td>
+            <td><span class="badge ${badge}">${c.status}</span></td>
+            <td>
+                <button onclick="resolve(${i})"><i class='fa-solid fa-check'></i></button>
+                <button onclick="deleteComplaint(${i})"><i class='fa-solid fa-trash'></i></button>
+            </td>
             </tr>`;
         }
     });
 }
 
-// RESOLVE COMPLAINT
+// Resolve/delete/export
 function resolve(i){
-    let complaints = JSON.parse(localStorage.getItem('complaints'))||[];
-    complaints[i].status = 'Resolved';
+    let complaints=JSON.parse(localStorage.getItem('complaints'))||[];
+    complaints[i].status='Resolved';
+    delete complaints[i].cleared; // show notification again
     localStorage.setItem('complaints',JSON.stringify(complaints));
     loadComplaints();
     showNotifications();
 }
 
-// DELETE COMPLAINT
 function deleteComplaint(i){
     if(confirm('Are you sure you want to delete this complaint?')){
-        let complaints = JSON.parse(localStorage.getItem('complaints'))||[];
+        let complaints=JSON.parse(localStorage.getItem('complaints'))||[];
         complaints.splice(i,1);
         localStorage.setItem('complaints',JSON.stringify(complaints));
         loadComplaints();
     }
 }
 
-// EXPORT CSV
 function exportCSV(){
-    let complaints = JSON.parse(localStorage.getItem('complaints'))||[];
+    let complaints=JSON.parse(localStorage.getItem('complaints'))||[];
     let csv="ID,Name,Number,Category,Issue,Date,Status\n";
     complaints.forEach(c=>{
         csv+=`${c.id},${c.name},${c.number},${c.category},${c.issue},${c.date},${c.status}\n`;
     });
-    let blob = new Blob([csv],{type:'text/csv'});
-    let a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'complaints.csv';
+    let blob=new Blob([csv],{type:'text/csv'});
+    let a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download='complaints.csv';
     a.click();
 }
 
-// RESIDENT NOTIFICATIONS WITH TOAST
+// Resident notifications
 function showNotifications(){
-    let notificationsDiv = document.getElementById('notifications');
-    notificationsDiv.innerHTML = '';
-    let complaints = JSON.parse(localStorage.getItem('complaints'))||[];
-    complaints.filter(c=>c.name===currentUser?.name && c.status==='Resolved').forEach(c=>{
-        notificationsDiv.innerHTML += `<div class="notification">Your complaint (${c.id}) has been resolved ✅</div>`;
+    let notificationsDiv=document.getElementById('notifications');
+    notificationsDiv.innerHTML='';
+    let complaints=JSON.parse(localStorage.getItem('complaints'))||[];
+    complaints.filter(c=>c.name===currentUser?.name && c.status==='Resolved' && !c.cleared).forEach(c=>{
+        notificationsDiv.innerHTML+=`<div class="notification">Your complaint (${c.id}) has been resolved ✅</div>`;
         showToast(`Your complaint (${c.id}) has been resolved ✅`);
     });
 }
 
-// TOAST POPUP
+// Clear notifications button
+document.getElementById('clearNotifications').addEventListener('click', function(){
+    let complaints=JSON.parse(localStorage.getItem('complaints'))||[];
+    complaints.forEach(c=>{
+        if(c.name===currentUser?.name && c.status==='Resolved'){
+            c.cleared=true;
+        }
+    });
+    localStorage.setItem('complaints',JSON.stringify(complaints));
+    showNotifications();
+});
+
+// Toast
 function showToast(message){
-    const toast = document.getElementById('toast');
-    toast.innerText = message;
-    toast.style.display = 'block';
+    const toast=document.getElementById('toast');
+    toast.innerText=message;
+    toast.style.display='block';
     toast.classList.remove('hidden');
-    setTimeout(()=>{
-        toast.style.display = 'none';
-    },4000);
+    setTimeout(()=>{toast.style.display='none';},4000);
 }
+
+// Admin password change
+function changeAdminPassword(){
+    const current=document.getElementById('currentPass').value;
+    const newP=document.getElementById('newPass').value;
+    const confirmP=document.getElementById('confirmPass').value;
+
+    if(current!==adminPassword){alert('Current password incorrect'); return;}
+    if(newP==='' || newP!==confirmP){alert('New password empty or does not match'); return;}
+    adminPassword=newP;
+    localStorage.setItem('adminPass',adminPassword);
+    alert('Admin password updated!');
+    document.getElementById('currentPass').value='';
+    document.getElementById('newPass').value='';
+    document.getElementById('confirmPass').value='';
+}
+
+// Resident logout
+document.getElementById('residentLogout').addEventListener('click', logout);
 
 loadComplaints();
 </script>
-
 </body>
 </html>
